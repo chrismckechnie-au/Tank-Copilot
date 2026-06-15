@@ -1,3 +1,5 @@
+import type { BeforeSendFn, PostHogConfig } from "posthog-js";
+
 type CaptureEvent = {
   event: string;
   properties?: Record<string, unknown>;
@@ -106,5 +108,22 @@ export function beforeSendPostHogEvent(event: CaptureEvent | null): CaptureEvent
     },
     $set: undefined,
     $set_once: undefined,
+  };
+}
+
+export function createPostHogConfig(apiHost?: string): Partial<PostHogConfig> {
+  return {
+    api_host: apiHost ?? "https://us.i.posthog.com",
+    autocapture: false,
+    before_send: beforeSendPostHogEvent as BeforeSendFn,
+    capture_pageview: false,
+    disable_session_recording: true,
+    mask_all_element_attributes: true,
+    mask_all_text: true,
+    person_profiles: "identified_only",
+    session_recording: {
+      maskAllInputs: true,
+      maskTextSelector: "*",
+    },
   };
 }

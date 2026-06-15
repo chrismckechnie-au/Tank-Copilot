@@ -31,3 +31,19 @@ test("web app manifest is available", async ({ request }) => {
   expect(body.name).toBe("Tank Copilot");
   expect(body.display).toBe("standalone");
 });
+
+test("login page exposes configured auth options", async ({ page }) => {
+  await page.goto("/login");
+
+  await expect(page.getByRole("heading", { name: /sign in/i })).toBeVisible();
+  await expect(page.getByRole("button", { name: /send magic link/i })).toBeVisible();
+  await expect(page.getByRole("button", { name: /continue with google/i })).toBeVisible();
+});
+
+test("protected app routes explain missing Supabase anon key", async ({ page }) => {
+  await page.goto("/dashboard");
+
+  await expect(
+    page.getByRole("heading", { name: /supabase browser auth is not configured/i }),
+  ).toBeVisible();
+});

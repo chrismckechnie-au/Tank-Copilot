@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   beforeSendPostHogEvent,
+  createPostHogConfig,
   sanitizeAnalyticsProperties,
   sanitizePath,
 } from "./analytics";
@@ -64,6 +65,20 @@ describe("analytics sanitization", () => {
       },
       $set: undefined,
       $set_once: undefined,
+    });
+  });
+
+  it("keeps session replay and DOM capture disabled by default", () => {
+    expect(createPostHogConfig()).toMatchObject({
+      autocapture: false,
+      capture_pageview: false,
+      disable_session_recording: true,
+      mask_all_element_attributes: true,
+      mask_all_text: true,
+      session_recording: {
+        maskAllInputs: true,
+        maskTextSelector: "*",
+      },
     });
   });
 });
