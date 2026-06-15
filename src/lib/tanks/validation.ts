@@ -60,8 +60,8 @@ export const waterTestFormSchema = z.object({
     (value) => value === undefined || value <= 45,
     "Temperature must be plausible",
   ),
-  salinity: optionalNumber,
-  kh: optionalNumber,
+  salinityPpt: optionalNumber,
+  alkalinityDkh: optionalNumber,
   gh: optionalNumber,
   phosphate: optionalNumber,
   calcium: optionalNumber,
@@ -103,7 +103,7 @@ export function requiredWaterTestFieldsForTankType(type: TankType) {
   const core = ["ammonia", "nitrite", "nitrate", "ph", "tempC"] as const;
 
   if (type === "reef") {
-    return [...core, "salinity", "kh"] as const;
+    return [...core, "salinityPpt", "alkalinityDkh"] as const;
   }
 
   return core;

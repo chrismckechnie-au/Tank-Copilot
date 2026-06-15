@@ -56,8 +56,8 @@ export default async function WaterTestPage({ params, searchParams }: WaterTestP
             <NumberField label="Nitrate (ppm)" name="nitrate" required />
             <NumberField label="pH" name="ph" required />
             <NumberField label="Temperature (C)" name="tempC" required />
-            <NumberField label="Salinity" name="salinity" required={isReef} />
-            <NumberField label="KH / alkalinity" name="kh" required={isReef} />
+            <NumberField label="Salinity (ppt)" name="salinityPpt" required={isReef} />
+            <NumberField label="Alkalinity (dKH)" name="alkalinityDkh" required={isReef} />
             <NumberField label="GH" name="gh" />
             <NumberField label="Phosphate (ppm)" name="phosphate" />
             <NumberField label="Calcium (ppm)" name="calcium" />

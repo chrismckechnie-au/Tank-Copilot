@@ -76,7 +76,10 @@ describe("water test validation", () => {
       tempC: "25",
     });
 
-    expect(validateCriticalWaterTestFields(parsed, "reef")).toEqual(["salinity", "kh"]);
+    expect(validateCriticalWaterTestFields(parsed, "reef")).toEqual([
+      "salinityPpt",
+      "alkalinityDkh",
+    ]);
   });
 
   it("accepts only supported water-test photo uploads", () => {
