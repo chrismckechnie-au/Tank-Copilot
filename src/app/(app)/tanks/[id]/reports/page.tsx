@@ -23,7 +23,7 @@ export default async function ReportsPage({ params, searchParams }: ReportsPageP
   const supabase = await createClient();
   const { data: tank } = await supabase
     .from("tanks")
-    .select("id,name,type,volume_liters")
+    .select("id,name,type,volume_liters,business_id")
     .eq("id", id)
     .single();
 
@@ -54,6 +54,7 @@ export default async function ReportsPage({ params, searchParams }: ReportsPageP
       <section className="mb-6 rounded-[2rem] border border-border bg-card p-6 shadow-xl shadow-primary/10">
         <p className="font-mono text-xs uppercase tracking-[0.24em] text-primary">
           Reports · {tank.type.toUpperCase()} · {tank.volume_liters} L
+          {tank.business_id ? " · branded service mode" : ""}
         </p>
         <div className="mt-2 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
           <div>
@@ -61,8 +62,8 @@ export default async function ReportsPage({ params, searchParams }: ReportsPageP
               Reports for {tank.name}
             </h1>
             <p className="mt-2 text-muted-foreground">
-              Deterministic report generation only. Public links expose `PublicReportV1`
-              sanitized content by exact token and noindex response.
+              Deterministic report generation only. Business reports create a private,
+              brand-owned HTML artifact and keep public sharing off by default.
             </p>
           </div>
           <Link className="rounded-full border border-border px-5 py-3 text-center font-medium" href={`/tanks/${tank.id}`}>
@@ -87,7 +88,9 @@ export default async function ReportsPage({ params, searchParams }: ReportsPageP
       ) : null}
 
       <section className="mb-6 rounded-[2rem] border border-border bg-card p-6">
-        <h2 className="text-2xl font-semibold tracking-tight">Generate deterministic report</h2>
+        <h2 className="text-2xl font-semibold tracking-tight">
+          {tank.business_id ? "Generate branded service report" : "Generate deterministic report"}
+        </h2>
         {latestTest ? (
           <>
             <p className="mt-2 text-sm text-muted-foreground">
@@ -132,7 +135,12 @@ export default async function ReportsPage({ params, searchParams }: ReportsPageP
                           ? "Info-only public projection; checklist hidden."
                           : "Reviewer-signed public projection."}
                       </p>
-                      {report.share_enabled ? (
+                      {report.type === "service" ? (
+                        <p className="mt-2 text-sm text-muted-foreground">
+                          Private branded report generated. Public sharing is disabled
+                          for client-contact report artifacts.
+                        </p>
+                      ) : report.share_enabled ? (
                         <p className="mt-2 break-all text-sm text-muted-foreground">
                           Share link: <Link className="underline" href={`/r/${report.share_id}`}>{`/r/${report.share_id}`}</Link>
                         </p>
@@ -148,13 +156,15 @@ export default async function ReportsPage({ params, searchParams }: ReportsPageP
                       ) : null}
                     </div>
 
-                    <form action={report.share_enabled ? revokeReportShare : enableReportShare}>
-                      <input name="tankId" type="hidden" value={tank.id} />
-                      <input name="reportId" type="hidden" value={report.id} />
-                      <button className="rounded-full border border-border px-5 py-3 font-medium" type="submit">
-                        {report.share_enabled ? "Revoke share" : "Enable share"}
-                      </button>
-                    </form>
+                    {report.type === "service" ? null : (
+                      <form action={report.share_enabled ? revokeReportShare : enableReportShare}>
+                        <input name="tankId" type="hidden" value={tank.id} />
+                        <input name="reportId" type="hidden" value={report.id} />
+                        <button className="rounded-full border border-border px-5 py-3 font-medium" type="submit">
+                          {report.share_enabled ? "Revoke share" : "Enable share"}
+                        </button>
+                      </form>
+                    )}
                   </div>
                 </article>
               );

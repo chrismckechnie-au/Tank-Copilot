@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { maybeEnhancePublicReport } from "@/lib/ai/report";
+import { buildBrandedReport } from "@/lib/reports/branded";
 import { buildReportContent, reportJson } from "@/lib/reports/builder";
 import {
   buildRecommendationDraft,
@@ -45,7 +46,7 @@ export async function generateReport(formData: FormData) {
 
   const { data: tank } = await supabase
     .from("tanks")
-    .select("id,name,type,volume_liters")
+    .select("id,name,type,volume_liters,business_id,client_id")
     .eq("id", parsed.data.tankId)
     .single();
 
@@ -115,10 +116,53 @@ export async function generateReport(formData: FormData) {
     observations: observations ?? [],
   });
   const publicReport = await maybeEnhancePublicReport(report.public);
-  const fullReport = {
+  let fullReport: typeof report.full & {
+    publicProjection: typeof publicReport;
+    brandedReport?: ReturnType<typeof buildBrandedReport>;
+  } = {
     ...report.full,
     publicProjection: publicReport,
   };
+  let reportType: "community" | "service" = "community";
+
+  if (tank.business_id) {
+    const [{ data: business }, { data: client }] = await Promise.all([
+      supabase
+        .from("businesses")
+        .select("name,logo_path")
+        .eq("id", tank.business_id)
+        .single(),
+      tank.client_id
+        ? supabase
+            .from("clients")
+            .select("name,contact,location")
+            .eq("id", tank.client_id)
+            .eq("business_id", tank.business_id)
+            .single()
+        : Promise.resolve({ data: null }),
+    ]);
+
+    if (!business || !client) {
+      redirect(`/tanks/${tank.id}/reports?error=${encodeURIComponent("Business report context is incomplete")}`);
+    }
+
+    reportType = "service";
+    fullReport = {
+      ...fullReport,
+      brandedReport: buildBrandedReport({
+        business: {
+          name: business.name,
+          logoPath: business.logo_path,
+        },
+        client: {
+          name: client.name,
+          contact: client.contact,
+          location: client.location,
+        },
+        report: fullReport,
+      }),
+    };
+  }
 
   let admin: ReturnType<typeof createAdminClient>;
   try {
@@ -132,8 +176,8 @@ export async function generateReport(formData: FormData) {
     .insert({
       tank_id: tank.id,
       owner_user_id: user.id,
-      business_id: null,
-      type: "community",
+      business_id: tank.business_id,
+      type: reportType,
       content: reportJson(fullReport),
       sanitized_public_content: reportJson(publicReport),
       share_enabled: false,
@@ -189,6 +233,8 @@ async function updateReportShare(formData: FormData, enabled: boolean) {
     })
     .eq("id", parsed.data.reportId)
     .eq("tank_id", parsed.data.tankId)
+    .eq("type", "community")
+    .is("business_id", null)
     .select("id")
     .single();
 

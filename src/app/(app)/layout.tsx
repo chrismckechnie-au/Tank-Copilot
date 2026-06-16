@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { type ReactNode } from "react";
 
 import { signOut } from "./actions";
-import { hasPublicSupabaseConfig } from "@/lib/env";
+import { hasPublicSupabaseConfig, isCommercialModeEnabled } from "@/lib/env";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function AppLayout({ children }: { children: ReactNode }) {
@@ -47,6 +47,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
           </Link>
           <div className="flex items-center gap-3 text-sm">
             <Link href="/dashboard">Dashboard</Link>
+            {isCommercialModeEnabled() ? <Link href="/businesses">Business</Link> : null}
             <Link href="/tanks/new">New tank</Link>
             <form action={signOut}>
               <button className="rounded-full border border-border px-4 py-2" type="submit">

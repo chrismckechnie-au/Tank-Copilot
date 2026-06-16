@@ -28,6 +28,72 @@ export type Database = {
         };
         Relationships: [];
       };
+      businesses: {
+        Row: {
+          id: string;
+          owner_id: string;
+          name: string;
+          logo_path: string | null;
+          plan: "pilot" | "service_pro" | "lfs";
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          owner_id: string;
+          name: string;
+          logo_path?: string | null;
+          plan?: "pilot" | "service_pro" | "lfs";
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["businesses"]["Insert"]>;
+        Relationships: [];
+      };
+      team_members: {
+        Row: {
+          business_id: string;
+          user_id: string;
+          role: "admin" | "editor" | "viewer";
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          business_id: string;
+          user_id: string;
+          role: "admin" | "editor" | "viewer";
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["team_members"]["Insert"]>;
+        Relationships: [];
+      };
+      clients: {
+        Row: {
+          id: string;
+          business_id: string;
+          name: string;
+          contact: string;
+          location: string;
+          notes: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          business_id: string;
+          name: string;
+          contact?: string;
+          location?: string;
+          notes?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["clients"]["Insert"]>;
+        Relationships: [];
+      };
       tanks: {
         Row: {
           id: string;
@@ -343,6 +409,29 @@ export type Database = {
     Functions: {
       create_hobby_tank: {
         Args: {
+          p_name: string;
+          p_type: "fw" | "planted" | "reef";
+          p_volume_liters: number;
+          p_unit_system: "metric" | "imperial";
+          p_start_date: string | null;
+          p_water_source: string;
+          p_target_ranges: Json;
+          p_equipment_category: string | null;
+          p_equipment_name: string | null;
+        };
+        Returns: string;
+      };
+      create_business: {
+        Args: {
+          p_name: string;
+          p_logo_path?: string | null;
+        };
+        Returns: string;
+      };
+      create_client_tank: {
+        Args: {
+          p_business_id: string;
+          p_client_id: string;
           p_name: string;
           p_type: "fw" | "planted" | "reef";
           p_volume_liters: number;

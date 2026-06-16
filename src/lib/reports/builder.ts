@@ -208,7 +208,7 @@ export function buildReportContent(input: {
   };
 }
 
-export function reportJson(value: ReportContent["full"] | ReportContent["public"]): Json {
+export function reportJson(value: unknown): Json {
   return value as unknown as Json;
 }
 

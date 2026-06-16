@@ -28,6 +28,10 @@ export function hasPublicSupabaseConfig() {
   return Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 }
 
+export function isCommercialModeEnabled() {
+  return process.env.COMMERCIAL_MODE_ENABLED === "true";
+}
+
 export function getPhase0ConfigStatus() {
   return {
     supabaseUrl: Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL),

@@ -1,6 +1,11 @@
 import { afterEach, describe, expect, it } from "vitest";
 
-import { getEnv, getOptionalEnv, getPhase0ConfigStatus } from "./env";
+import {
+  getEnv,
+  getOptionalEnv,
+  getPhase0ConfigStatus,
+  isCommercialModeEnabled,
+} from "./env";
 
 const originalEnv = process.env;
 
@@ -36,5 +41,13 @@ describe("env helpers", () => {
       posthogKey: false,
       anthropicEnabled: false,
     });
+  });
+
+  it("feature-gates commercial mode explicitly", () => {
+    process.env.COMMERCIAL_MODE_ENABLED = "false";
+    expect(isCommercialModeEnabled()).toBe(false);
+
+    process.env.COMMERCIAL_MODE_ENABLED = "true";
+    expect(isCommercialModeEnabled()).toBe(true);
   });
 });
