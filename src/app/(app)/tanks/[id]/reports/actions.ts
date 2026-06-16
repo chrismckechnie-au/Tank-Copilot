@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 
+import { maybeEnhancePublicReport } from "@/lib/ai/report";
 import { buildReportContent, reportJson } from "@/lib/reports/builder";
 import {
   buildRecommendationDraft,
@@ -113,6 +114,11 @@ export async function generateReport(formData: FormData) {
     },
     observations: observations ?? [],
   });
+  const publicReport = await maybeEnhancePublicReport(report.public);
+  const fullReport = {
+    ...report.full,
+    publicProjection: publicReport,
+  };
 
   let admin: ReturnType<typeof createAdminClient>;
   try {
@@ -128,8 +134,8 @@ export async function generateReport(formData: FormData) {
       owner_user_id: user.id,
       business_id: null,
       type: "community",
-      content: reportJson(report.full),
-      sanitized_public_content: reportJson(report.public),
+      content: reportJson(fullReport),
+      sanitized_public_content: reportJson(publicReport),
       share_enabled: false,
       share_expires_at: null,
     })

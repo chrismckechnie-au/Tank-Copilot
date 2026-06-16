@@ -8,7 +8,8 @@
 - [x] Anonymous direct table scans remain denied; public access goes through the sanitized RPC projection only.
 - [x] `/tanks/[id]/reports` owner page added for report generation, share enable, and share revoke.
 - [x] `/r/[shareId]` public noindex HTML route added with exact-token lookup and 410 for revoked/expired links.
-- [x] AI remains disabled; report prose uses deterministic fallback content only.
+- [x] AI report polish layer is feature-flagged, server-only, and falls back to deterministic content when disabled, unconfigured, invalid, or timed out.
+- [x] AI guardrail tests cover severity immutability, no unsigned action checklist exposure, red-severity bypasses, unsafe additive/water-change prose, and no raw IDs/share IDs/photos/free-text symptoms in outbound payloads.
 - [ ] Cloud Supabase migration execution and RLS smoke tests are still pending.
 - [ ] Full authenticated browser flow is still blocked until `NEXT_PUBLIC_SUPABASE_ANON_KEY` is configured.
 - [ ] PDF generation remains unimplemented.
@@ -17,9 +18,11 @@
 
 - Red test confirmed before implementation: `npm run test -- src/lib/reports/builder.test.ts` failed because `src/lib/reports/builder.ts` did not exist.
 - Green targeted test after implementation: `npm run test -- src/lib/reports/builder.test.ts src/app/r/[shareId]/route.test.ts` passed 5 tests.
+- Red AI boundary test confirmed before implementation: `npm run test -- src/lib/ai/report.test.ts` failed because `src/lib/ai/report.ts` did not exist.
+- Green targeted AI/report/triage test after hardening: `npm run test -- src/lib/ai/report.test.ts src/lib/reports/builder.test.ts src/lib/triage/validation.test.ts` passed 22 tests.
 - `npm run typecheck` passed.
 - `npm run lint` passed.
-- `npm run test` passed: 9 files, 45 tests.
+- `npm run test` passed: 10 files, 60 tests.
 - `npm run build` passed and includes `/r/[shareId]` and `/tanks/[id]/reports`.
 - `npm run test:e2e` passed: 10 Playwright tests.
 - `npm audit --omit=dev` passed with 0 vulnerabilities.

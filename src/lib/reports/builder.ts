@@ -1,5 +1,6 @@
 import type { Json } from "@/lib/supabase/database.types";
 import type { TankType } from "@/lib/tanks/validation";
+import { knownSymptomStrings } from "@/lib/triage/symptoms";
 
 type RuleSeverity = "green" | "yellow" | "red";
 type RuleConfidence = "low" | "medium" | "high";
@@ -72,6 +73,7 @@ export type PublicReportV1 = {
   reviewStatus: RuleReviewStatus;
   displayMode: "info_only" | "actionable";
   rulesUnderReview: boolean;
+  generatedWithAi: boolean;
   summary: string;
   explanations: ReportExplanation[];
   checklist: string[];
@@ -124,7 +126,7 @@ export function buildReportContent(input: {
 }): ReportContent {
   const observations = input.observations.map((observation) => ({
     id: observation.id,
-    symptoms: stringArray(observation.symptoms),
+    symptoms: knownSymptomStrings(observation.symptoms),
     affectedLivestock: observation.affected_livestock,
     recentChanges: observation.recent_changes,
     photoPaths: observation.photo_paths,
@@ -146,6 +148,7 @@ export function buildReportContent(input: {
     reviewStatus: input.recommendation.review_status,
     displayMode: input.recommendation.display_mode,
     rulesUnderReview: !signed,
+    generatedWithAi: false,
     summary: publicSummary(input.recommendation),
     explanations: signed
       ? input.recommendation.explanations.filter(

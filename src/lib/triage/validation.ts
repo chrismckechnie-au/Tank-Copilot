@@ -1,17 +1,8 @@
 import { z } from "zod";
 
-export const symptomOptions = [
-  "gasping",
-  "lethargy",
-  "not_eating",
-  "spots_or_lesions",
-  "clamped_fins",
-  "flashing_or_scratching",
-  "rapid_breathing",
-  "coral_retracted",
-  "algae_bloom",
-  "cloudy_water",
-] as const;
+import { symptomOptions } from "./symptoms";
+
+export { symptomOptions } from "./symptoms";
 
 const emptyToUndefined = (value: unknown) => (value === "" || value === null ? undefined : value);
 

@@ -47,7 +47,11 @@ const baseInput = {
   observations: [
     {
       id: "123e4567-e89b-12d3-a456-426614174222",
-      symptoms: ["coral_retracted", "gasping"],
+      symptoms: [
+        "coral_retracted",
+        "gasping",
+        "Moved house from 12 Sample Street and uploaded private.jpg",
+      ],
       affected_livestock: "Acan colony near the front window",
       recent_changes: "Moved house from 12 Sample Street and changed salt brand.",
       photo_paths: [
@@ -71,6 +75,7 @@ describe("buildReportContent", () => {
     expect(publicJson).not.toContain(baseInput.tank.name);
     expect(publicJson).not.toContain("Sample Street");
     expect(publicJson).not.toContain("private.jpg");
+    expect(report.public.observationSummary.symptoms).toEqual(["coral_retracted", "gasping"]);
   });
 
   it("keeps unsigned advice out of public report content", () => {
