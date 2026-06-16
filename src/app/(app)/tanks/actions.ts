@@ -6,7 +6,6 @@ import { redirect } from "next/navigation";
 import {
   formDataToObject,
   litersFromInput,
-  photoExtensionFromMimeType,
   tankFormSchema,
   targetRangesForTankType,
   validateCriticalWaterTestFields,
@@ -15,6 +14,11 @@ import {
   waterTestPhotoConfig,
   type TankType,
 } from "@/lib/tanks/validation";
+import { sanitizeImageFile } from "@/lib/images/sanitize";
+import {
+  formDataToObservationObject,
+  observationFormSchema,
+} from "@/lib/triage/validation";
 import {
   buildRecommendationDraft,
   recommendationPersistedChecklist,
@@ -34,6 +38,21 @@ function firstFieldError(error: unknown) {
   }
 
   return "Invalid form input";
+}
+
+function safeTankPath(formData: FormData, suffix: string) {
+  const tankId = formData.get("tankId");
+
+  if (
+    typeof tankId === "string" &&
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+      tankId,
+    )
+  ) {
+    return `/tanks/${tankId}${suffix}`;
+  }
+
+  return "/dashboard";
 }
 
 export async function createTank(formData: FormData) {
@@ -78,7 +97,9 @@ export async function logWaterTest(formData: FormData) {
   const parsed = waterTestFormSchema.safeParse(formDataToObject(formData));
 
   if (!parsed.success) {
-    redirect(`/tanks/${formData.get("tankId")}/test?error=${encodeURIComponent(firstFieldError(parsed.error))}`);
+    redirect(
+      `${safeTankPath(formData, "/test")}?error=${encodeURIComponent(firstFieldError(parsed.error))}`,
+    );
   }
 
   const supabase = await createClient();
@@ -115,16 +136,23 @@ export async function logWaterTest(formData: FormData) {
 
   let photoPath: string | null = null;
   if (photoValidation.file) {
+    const sanitizedPhoto = await sanitizeImageFile(photoValidation.file);
+    if (sanitizedPhoto.error || !sanitizedPhoto.image) {
+      redirect(
+        `/tanks/${tank.id}/test?error=${encodeURIComponent(sanitizedPhoto.error ?? "Could not process photo")}`,
+      );
+    }
+
     photoPath = [
       user.id,
       tank.id,
-      `${crypto.randomUUID()}.${photoExtensionFromMimeType(photoValidation.file.type)}`,
+      `${crypto.randomUUID()}.${sanitizedPhoto.image.extension}`,
     ].join("/");
 
     const { error: uploadError } = await supabase.storage
       .from(waterTestPhotoConfig.bucket)
-      .upload(photoPath, photoValidation.file, {
-        contentType: photoValidation.file.type,
+      .upload(photoPath, sanitizedPhoto.image.data, {
+        contentType: sanitizedPhoto.image.contentType,
         upsert: false,
       });
 
@@ -199,4 +227,90 @@ export async function logWaterTest(formData: FormData) {
   }
 
   redirect(`/tanks/${tank.id}/results?${resultParams.toString()}`);
+}
+
+export async function logObservation(formData: FormData) {
+  const parsed = observationFormSchema.safeParse(formDataToObservationObject(formData));
+
+  if (!parsed.success) {
+    redirect(
+      `${safeTankPath(formData, "/triage")}?error=${encodeURIComponent(firstFieldError(parsed.error))}`,
+    );
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  if (userError || !user) {
+    redirect(`/login?next=/tanks/${parsed.data.tankId}/triage`);
+  }
+
+  const { data: tank, error: tankError } = await supabase
+    .from("tanks")
+    .select("id")
+    .eq("id", parsed.data.tankId)
+    .single();
+
+  if (tankError || !tank) {
+    redirect("/dashboard?error=tank-not-found");
+  }
+
+  const photoValidation = validateWaterTestPhoto(formData.get("photo"));
+  if (photoValidation.error) {
+    redirect(`/tanks/${tank.id}/triage?error=${encodeURIComponent(photoValidation.error)}`);
+  }
+
+  const photoPaths: string[] = [];
+  if (photoValidation.file) {
+    const sanitizedPhoto = await sanitizeImageFile(photoValidation.file);
+    if (sanitizedPhoto.error || !sanitizedPhoto.image) {
+      redirect(
+        `/tanks/${tank.id}/triage?error=${encodeURIComponent(sanitizedPhoto.error ?? "Could not process photo")}`,
+      );
+    }
+
+    const photoPath = [
+      user.id,
+      tank.id,
+      "observations",
+      `${crypto.randomUUID()}.${sanitizedPhoto.image.extension}`,
+    ].join("/");
+
+    const { error: uploadError } = await supabase.storage
+      .from(waterTestPhotoConfig.bucket)
+      .upload(photoPath, sanitizedPhoto.image.data, {
+        contentType: sanitizedPhoto.image.contentType,
+        upsert: false,
+      });
+
+    if (uploadError) {
+      redirect(`/tanks/${tank.id}/triage?error=${encodeURIComponent("Could not upload photo")}`);
+    }
+
+    photoPaths.push(photoPath);
+  }
+
+  const observation = parsed.data;
+  const { error } = await supabase.rpc("create_observation", {
+    p_tank_id: tank.id,
+    p_symptoms: observation.symptoms,
+    p_affected_livestock: observation.affectedLivestock,
+    p_recent_changes: observation.recentChanges,
+    p_photo_paths: photoPaths,
+  });
+
+  if (error) {
+    if (photoPaths.length > 0) {
+      await supabase.storage.from(waterTestPhotoConfig.bucket).remove(photoPaths);
+    }
+
+    redirect(`/tanks/${tank.id}/triage?error=${encodeURIComponent("Could not save observation")}`);
+  }
+
+  revalidatePath(`/tanks/${tank.id}`);
+  revalidatePath(`/tanks/${tank.id}/triage`);
+  redirect(`/tanks/${tank.id}/triage?saved=1`);
 }

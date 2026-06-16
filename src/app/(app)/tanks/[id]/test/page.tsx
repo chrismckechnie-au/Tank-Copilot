@@ -76,7 +76,7 @@ export default async function WaterTestPage({ params, searchParams }: WaterTestP
               type="file"
             />
             <span className="text-xs text-muted-foreground">
-              JPEG, PNG, or WebP up to 5 MB. Photos stay private in storage.
+              JPEG, PNG, or WebP up to 5 MB. Photos are re-encoded to strip metadata before private storage.
             </span>
           </label>
           <button className="rounded-full bg-primary px-6 py-3 font-medium text-primary-foreground" type="submit">

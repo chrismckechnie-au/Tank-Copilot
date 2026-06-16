@@ -50,6 +50,9 @@ export default async function TankPage({ params }: TankPageProps) {
             <Link className="rounded-full border border-border px-5 py-3 text-center font-medium" href={`/tanks/${tank.id}/results`}>
               View latest result
             </Link>
+            <Link className="rounded-full border border-border px-5 py-3 text-center font-medium" href={`/tanks/${tank.id}/triage`}>
+              Add observation
+            </Link>
           </div>
         </div>
       </section>

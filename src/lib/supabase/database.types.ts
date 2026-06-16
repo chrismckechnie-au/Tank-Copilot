@@ -172,6 +172,32 @@ export type Database = {
         Update: Partial<Database["public"]["Tables"]["recommendations"]["Insert"]>;
         Relationships: [];
       };
+      observations: {
+        Row: {
+          id: string;
+          tank_id: string;
+          symptoms: Json;
+          affected_livestock: string;
+          photo_paths: string[];
+          recent_changes: string;
+          severity: "routine" | "watch" | "urgent";
+          follow_up_prompts: Json;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          tank_id: string;
+          symptoms?: Json;
+          affected_livestock?: string;
+          photo_paths?: string[];
+          recent_changes?: string;
+          severity?: "routine" | "watch" | "urgent";
+          follow_up_prompts?: Json;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["observations"]["Insert"]>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -186,6 +212,16 @@ export type Database = {
           p_target_ranges: Json;
           p_equipment_category: string | null;
           p_equipment_name: string | null;
+        };
+        Returns: string;
+      };
+      create_observation: {
+        Args: {
+          p_tank_id: string;
+          p_symptoms: string[];
+          p_affected_livestock: string;
+          p_recent_changes: string;
+          p_photo_paths?: string[];
         };
         Returns: string;
       };
