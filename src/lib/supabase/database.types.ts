@@ -308,6 +308,36 @@ export type Database = {
         Update: Partial<Database["public"]["Tables"]["maintenance_reminder_deliveries"]["Insert"]>;
         Relationships: [];
       };
+      livestock: {
+        Row: {
+          id: string;
+          tank_id: string;
+          species_name: string;
+          common_name: string;
+          quantity: number;
+          added_at: string | null;
+          status: "active" | "quarantine" | "planned" | "removed" | "deceased";
+          notes: string;
+          photo_path: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          tank_id: string;
+          species_name: string;
+          common_name?: string;
+          quantity?: number;
+          added_at?: string | null;
+          status?: "active" | "quarantine" | "planned" | "removed" | "deceased";
+          notes?: string;
+          photo_path?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["livestock"]["Insert"]>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {

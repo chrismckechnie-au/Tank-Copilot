@@ -56,6 +56,12 @@ export default async function TankPage({ params }: TankPageProps) {
             <Link className="rounded-full border border-border px-5 py-3 text-center font-medium" href={`/tanks/${tank.id}/tasks`}>
               Tasks
             </Link>
+            <Link className="rounded-full border border-border px-5 py-3 text-center font-medium" href={`/tanks/${tank.id}/trends`}>
+              Trends
+            </Link>
+            <Link className="rounded-full border border-border px-5 py-3 text-center font-medium" href={`/tanks/${tank.id}/livestock`}>
+              Livestock
+            </Link>
             <Link className="rounded-full border border-border px-5 py-3 text-center font-medium" href={`/tanks/${tank.id}/reports`}>
               Reports
             </Link>

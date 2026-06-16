@@ -16,6 +16,12 @@ import {
 } from "@/lib/tanks/validation";
 import { sanitizeImageFile } from "@/lib/images/sanitize";
 import {
+  formDataToLivestockObject,
+  formDataToLivestockStatusObject,
+  livestockFormSchema,
+  livestockStatusFormSchema,
+} from "@/lib/livestock/validation";
+import {
   formDataToMaintenanceTaskObject,
   formDataToRescheduleTaskObject,
   formDataToTaskIdObject,
@@ -450,4 +456,94 @@ export async function rescheduleMaintenanceTask(formData: FormData) {
   revalidatePath(`/tanks/${parsed.data.tankId}`);
   revalidatePath(`/tanks/${parsed.data.tankId}/tasks`);
   redirect(`/tanks/${parsed.data.tankId}/tasks?saved=task-rescheduled`);
+}
+
+export async function createLivestock(formData: FormData) {
+  const parsed = livestockFormSchema.safeParse(formDataToLivestockObject(formData));
+
+  if (!parsed.success) {
+    redirect(
+      `${safeTankPath(formData, "/livestock")}?error=${encodeURIComponent(firstFieldError(parsed.error))}`,
+    );
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  if (userError || !user) {
+    redirect(`/login?next=/tanks/${parsed.data.tankId}/livestock`);
+  }
+
+  const { data: tank, error: tankError } = await supabase
+    .from("tanks")
+    .select("id")
+    .eq("id", parsed.data.tankId)
+    .single();
+
+  if (tankError || !tank) {
+    redirect("/dashboard?error=tank-not-found");
+  }
+
+  const livestock = parsed.data;
+  const { error } = await supabase.from("livestock").insert({
+    tank_id: tank.id,
+    species_name: livestock.speciesName,
+    common_name: livestock.commonName,
+    quantity: livestock.quantity,
+    added_at: livestock.addedAt ?? null,
+    status: livestock.status,
+    notes: livestock.notes,
+  });
+
+  if (error) {
+    redirect(`/tanks/${tank.id}/livestock?error=${encodeURIComponent("Could not add livestock")}`);
+  }
+
+  revalidatePath("/dashboard");
+  revalidatePath(`/tanks/${tank.id}`);
+  revalidatePath(`/tanks/${tank.id}/livestock`);
+  redirect(`/tanks/${tank.id}/livestock?saved=livestock-created`);
+}
+
+export async function updateLivestockStatus(formData: FormData) {
+  const parsed = livestockStatusFormSchema.safeParse(
+    formDataToLivestockStatusObject(formData),
+  );
+
+  if (!parsed.success) {
+    redirect(
+      `${safeTankPath(formData, "/livestock")}?error=${encodeURIComponent(firstFieldError(parsed.error))}`,
+    );
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  if (userError || !user) {
+    redirect(`/login?next=/tanks/${parsed.data.tankId}/livestock`);
+  }
+
+  const { error } = await supabase
+    .from("livestock")
+    .update({ status: parsed.data.status })
+    .eq("id", parsed.data.livestockId)
+    .eq("tank_id", parsed.data.tankId)
+    .select("id")
+    .single();
+
+  if (error) {
+    redirect(
+      `/tanks/${parsed.data.tankId}/livestock?error=${encodeURIComponent("Could not update livestock")}`,
+    );
+  }
+
+  revalidatePath(`/tanks/${parsed.data.tankId}`);
+  revalidatePath(`/tanks/${parsed.data.tankId}/livestock`);
+  redirect(`/tanks/${parsed.data.tankId}/livestock?saved=livestock-updated`);
 }
