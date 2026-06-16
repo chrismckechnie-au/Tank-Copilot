@@ -1,9 +1,18 @@
+import Link from "next/link";
+
+import { deleteAccount } from "./actions";
 import { hasPublicSupabaseConfig } from "@/lib/env";
 
-export default async function SettingsPage() {
+type SettingsPageProps = {
+  searchParams: Promise<{ error?: string }>;
+};
+
+export default async function SettingsPage({ searchParams }: SettingsPageProps) {
   if (!hasPublicSupabaseConfig()) {
     return null;
   }
+
+  const { error } = await searchParams;
 
   return (
     <main className="mx-auto w-full max-w-5xl px-6 py-10">
@@ -21,6 +30,12 @@ export default async function SettingsPage() {
         </p>
       </section>
 
+      {error ? (
+        <section className="mb-6 rounded-2xl border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
+          {error}
+        </section>
+      ) : null}
+
       <section className="grid gap-5 md:grid-cols-2">
         <article className="rounded-[2rem] border border-border bg-card p-6">
           <h2 className="text-2xl font-semibold tracking-tight">Data export</h2>
@@ -30,15 +45,34 @@ export default async function SettingsPage() {
             tasks, observations, and private reports through an owner-authorized
             server route.
           </p>
+          <Link
+            className="mt-5 inline-flex rounded-full bg-primary px-5 py-3 text-sm font-medium text-primary-foreground"
+            href="/settings/export"
+          >
+            Download account JSON
+          </Link>
         </article>
 
-        <article className="rounded-[2rem] border border-border bg-card p-6">
+        <article className="rounded-[2rem] border border-destructive/20 bg-card p-6">
           <h2 className="text-2xl font-semibold tracking-tight">Account deletion</h2>
           <p className="mt-3 text-sm leading-6 text-muted-foreground">
             Deletion must remove hobby-owned tanks and user memberships, revoke report
             shares, and leave only legally required billing/webhook audit records.
             Business admins must transfer or close business ownership before deletion.
           </p>
+          <form action={deleteAccount} className="mt-5 grid gap-3">
+            <label className="grid gap-2 text-sm font-medium">
+              Confirmation phrase
+              <input
+                className="h-12 rounded-2xl border border-input bg-background px-4"
+                name="confirmation"
+                placeholder="DELETE MY ACCOUNT"
+              />
+            </label>
+            <button className="rounded-full border border-destructive/40 px-5 py-3 text-sm font-medium text-destructive" type="submit">
+              Permanently delete account
+            </button>
+          </form>
         </article>
 
         <article className="rounded-[2rem] border border-border bg-card p-6">
