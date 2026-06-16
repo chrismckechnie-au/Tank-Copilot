@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
 }
 
 function hashCallbackBridgeHtml(next: string) {
-  const implicitPath = `/auth/implicit-callback?next=${encodeURIComponent(next)}`;
+  const cookieName = "sb-lpbddkmqhddiywyivrom-auth-token";
 
   return `<!doctype html>
 <html lang="en">
@@ -48,10 +48,38 @@ function hashCallbackBridgeHtml(next: string) {
   <body>
     <p>Completing sign in...</p>
     <script>
-      if (window.location.hash) {
-        window.location.replace(${JSON.stringify(implicitPath)} + window.location.hash);
-      } else {
+      const next = ${JSON.stringify(next)};
+      const cookieName = ${JSON.stringify(cookieName)};
+      const hash = new URLSearchParams(window.location.hash.slice(1));
+      const accessToken = hash.get("access_token");
+      const refreshToken = hash.get("refresh_token");
+      const expiresIn = Number(hash.get("expires_in") || "3600");
+      const expiresAt = Number(hash.get("expires_at") || Math.floor(Date.now() / 1000) + expiresIn);
+      const tokenType = hash.get("token_type") || "bearer";
+
+      function base64Url(value) {
+        const bytes = new TextEncoder().encode(value);
+        let binary = "";
+        bytes.forEach((byte) => {
+          binary += String.fromCharCode(byte);
+        });
+        return btoa(binary).replaceAll("+", "-").replaceAll("/", "_").replaceAll("=", "");
+      }
+
+      if (!accessToken || !refreshToken) {
         window.location.replace("/login?error=auth-code");
+      } else {
+        const session = {
+          access_token: accessToken,
+          refresh_token: refreshToken,
+          expires_at: expiresAt,
+          expires_in: expiresIn,
+          token_type: tokenType,
+          user: null
+        };
+        const cookieValue = "base64-" + base64Url(JSON.stringify(session));
+        document.cookie = cookieName + "=" + encodeURIComponent(cookieValue) + "; Path=/; Max-Age=34560000; SameSite=Lax; Secure";
+        window.location.replace(next);
       }
     </script>
   </body>
