@@ -5,6 +5,10 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { maybeEnhancePublicReport } from "@/lib/ai/report";
+import {
+  buildBrandedReportArtifact,
+  reportArtifactsBucket,
+} from "@/lib/reports/artifacts";
 import { buildBrandedReport } from "@/lib/reports/branded";
 import { buildReportContent, reportJson } from "@/lib/reports/builder";
 import {
@@ -188,6 +192,36 @@ export async function generateReport(formData: FormData) {
 
   if (error || !savedReport) {
     redirect(`/tanks/${tank.id}/reports?error=${encodeURIComponent("Could not generate report")}`);
+  }
+
+  if (fullReport.brandedReport) {
+    const artifact = buildBrandedReportArtifact({
+      ownerUserId: user.id,
+      reportId: savedReport.id,
+      brandedReport: fullReport.brandedReport,
+    });
+    const { error: artifactError } = await admin.storage
+      .from(reportArtifactsBucket)
+      .upload(artifact.path, artifact.body, {
+        contentType: artifact.contentType,
+        upsert: false,
+      });
+
+    if (artifactError) {
+      await admin.from("reports").delete().eq("id", savedReport.id);
+      redirect(`/tanks/${tank.id}/reports?error=${encodeURIComponent("Could not store branded report artifact")}`);
+    }
+
+    const { error: updateError } = await admin
+      .from("reports")
+      .update({ pdf_path: artifact.path })
+      .eq("id", savedReport.id);
+
+    if (updateError) {
+      await admin.storage.from(reportArtifactsBucket).remove([artifact.path]);
+      await admin.from("reports").delete().eq("id", savedReport.id);
+      redirect(`/tanks/${tank.id}/reports?error=${encodeURIComponent("Could not attach branded report artifact")}`);
+    }
   }
 
   revalidatePath(`/tanks/${tank.id}`);

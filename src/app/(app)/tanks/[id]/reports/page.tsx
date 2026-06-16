@@ -41,7 +41,7 @@ export default async function ReportsPage({ params, searchParams }: ReportsPageP
     supabase
       .from("reports")
       .select(
-        "id,generated_at,type,share_id,share_enabled,share_expires_at,sanitized_public_content",
+        "id,generated_at,type,share_id,share_enabled,share_expires_at,pdf_path,sanitized_public_content",
       )
       .eq("tank_id", tank.id)
       .order("generated_at", { ascending: false })
@@ -137,8 +137,9 @@ export default async function ReportsPage({ params, searchParams }: ReportsPageP
                       </p>
                       {report.type === "service" ? (
                         <p className="mt-2 text-sm text-muted-foreground">
-                          Private branded report generated. Public sharing is disabled
-                          for client-contact report artifacts.
+                          {report.pdf_path
+                            ? "Private branded report artifact stored. Public sharing is disabled for client-contact report artifacts."
+                            : "Private branded report generated. Public sharing is disabled for client-contact report artifacts."}
                         </p>
                       ) : report.share_enabled ? (
                         <p className="mt-2 break-all text-sm text-muted-foreground">
