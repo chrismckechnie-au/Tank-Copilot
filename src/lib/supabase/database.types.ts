@@ -234,6 +234,80 @@ export type Database = {
         Update: Partial<Database["public"]["Tables"]["reports"]["Insert"]>;
         Relationships: [];
       };
+      maintenance_tasks: {
+        Row: {
+          id: string;
+          tank_id: string;
+          title: string;
+          category:
+            | "water_change"
+            | "water_test"
+            | "filter"
+            | "dosing"
+            | "equipment"
+            | "livestock"
+            | "other";
+          cadence_days: number;
+          last_completed_on: string | null;
+          next_due_on: string;
+          reminder_enabled: boolean;
+          seed_key: "water_test" | "water_change" | "filter_flow" | "reef_stability" | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          tank_id: string;
+          title: string;
+          category:
+            | "water_change"
+            | "water_test"
+            | "filter"
+            | "dosing"
+            | "equipment"
+            | "livestock"
+            | "other";
+          cadence_days: number;
+          last_completed_on?: string | null;
+          next_due_on: string;
+          reminder_enabled?: boolean;
+          seed_key?: "water_test" | "water_change" | "filter_flow" | "reef_stability" | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["maintenance_tasks"]["Insert"]>;
+        Relationships: [];
+      };
+      maintenance_reminder_deliveries: {
+        Row: {
+          id: string;
+          task_id: string;
+          owner_user_id: string;
+          due_on: string;
+          status: "pending" | "sending" | "sent" | "failed" | "skipped";
+          attempts: number;
+          next_attempt_at: string;
+          sent_at: string | null;
+          last_error: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          task_id: string;
+          owner_user_id: string;
+          due_on: string;
+          status?: "pending" | "sending" | "sent" | "failed" | "skipped";
+          attempts?: number;
+          next_attempt_at?: string;
+          sent_at?: string | null;
+          last_error?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["maintenance_reminder_deliveries"]["Insert"]>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -260,6 +334,48 @@ export type Database = {
           p_photo_paths?: string[];
         };
         Returns: string;
+      };
+      complete_maintenance_task: {
+        Args: {
+          p_task_id: string;
+          p_completed_on?: string;
+        };
+        Returns: string;
+      };
+      reschedule_maintenance_task: {
+        Args: {
+          p_task_id: string;
+          p_next_due_on: string;
+        };
+        Returns: string;
+      };
+      enqueue_due_maintenance_reminders: {
+        Args: {
+          p_due_on?: string;
+        };
+        Returns: number;
+      };
+      claim_maintenance_reminders: {
+        Args: {
+          p_limit?: number;
+        };
+        Returns: Array<{
+          delivery_id: string;
+          task_id: string;
+          task_title: string;
+          tank_name: string;
+          owner_email: string;
+          due_on: string;
+          attempt: number;
+        }>;
+      };
+      record_maintenance_reminder_delivery: {
+        Args: {
+          p_delivery_id: string;
+          p_success: boolean;
+          p_last_error?: string | null;
+        };
+        Returns: undefined;
       };
       get_public_report: {
         Args: {

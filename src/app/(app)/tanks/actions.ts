@@ -16,6 +16,14 @@ import {
 } from "@/lib/tanks/validation";
 import { sanitizeImageFile } from "@/lib/images/sanitize";
 import {
+  formDataToMaintenanceTaskObject,
+  formDataToRescheduleTaskObject,
+  formDataToTaskIdObject,
+  maintenanceRescheduleFormSchema,
+  maintenanceTaskFormSchema,
+  maintenanceTaskIdSchema,
+} from "@/lib/maintenance/validation";
+import {
   formDataToObservationObject,
   observationFormSchema,
 } from "@/lib/triage/validation";
@@ -53,6 +61,10 @@ function safeTankPath(formData: FormData, suffix: string) {
   }
 
   return "/dashboard";
+}
+
+function todayIsoDate() {
+  return new Date().toISOString().slice(0, 10);
 }
 
 export async function createTank(formData: FormData) {
@@ -313,4 +325,129 @@ export async function logObservation(formData: FormData) {
   revalidatePath(`/tanks/${tank.id}`);
   revalidatePath(`/tanks/${tank.id}/triage`);
   redirect(`/tanks/${tank.id}/triage?saved=1`);
+}
+
+export async function createMaintenanceTask(formData: FormData) {
+  const parsed = maintenanceTaskFormSchema.safeParse(
+    formDataToMaintenanceTaskObject(formData),
+  );
+
+  if (!parsed.success) {
+    redirect(
+      `${safeTankPath(formData, "/tasks")}?error=${encodeURIComponent(firstFieldError(parsed.error))}`,
+    );
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  if (userError || !user) {
+    redirect(`/login?next=/tanks/${parsed.data.tankId}/tasks`);
+  }
+
+  const { data: tank, error: tankError } = await supabase
+    .from("tanks")
+    .select("id")
+    .eq("id", parsed.data.tankId)
+    .single();
+
+  if (tankError || !tank) {
+    redirect("/dashboard?error=tank-not-found");
+  }
+
+  const task = parsed.data;
+  const { error } = await supabase.from("maintenance_tasks").insert({
+    tank_id: tank.id,
+    title: task.title,
+    category: task.category,
+    cadence_days: task.cadenceDays,
+    next_due_on: task.nextDueOn ?? todayIsoDate(),
+    reminder_enabled: task.reminderEnabled,
+  });
+
+  if (error) {
+    redirect(`/tanks/${tank.id}/tasks?error=${encodeURIComponent("Could not create task")}`);
+  }
+
+  revalidatePath("/dashboard");
+  revalidatePath(`/tanks/${tank.id}`);
+  revalidatePath(`/tanks/${tank.id}/tasks`);
+  redirect(`/tanks/${tank.id}/tasks?saved=task-created`);
+}
+
+export async function completeMaintenanceTask(formData: FormData) {
+  const parsed = maintenanceTaskIdSchema.safeParse(formDataToTaskIdObject(formData));
+
+  if (!parsed.success) {
+    redirect(
+      `${safeTankPath(formData, "/tasks")}?error=${encodeURIComponent(firstFieldError(parsed.error))}`,
+    );
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  if (userError || !user) {
+    redirect(`/login?next=/tanks/${parsed.data.tankId}/tasks`);
+  }
+
+  const { error } = await supabase.rpc("complete_maintenance_task", {
+    p_task_id: parsed.data.taskId,
+    p_completed_on: todayIsoDate(),
+  });
+
+  if (error) {
+    redirect(
+      `/tanks/${parsed.data.tankId}/tasks?error=${encodeURIComponent("Could not complete task")}`,
+    );
+  }
+
+  revalidatePath("/dashboard");
+  revalidatePath(`/tanks/${parsed.data.tankId}`);
+  revalidatePath(`/tanks/${parsed.data.tankId}/tasks`);
+  redirect(`/tanks/${parsed.data.tankId}/tasks?saved=task-completed`);
+}
+
+export async function rescheduleMaintenanceTask(formData: FormData) {
+  const parsed = maintenanceRescheduleFormSchema.safeParse(
+    formDataToRescheduleTaskObject(formData),
+  );
+
+  if (!parsed.success) {
+    redirect(
+      `${safeTankPath(formData, "/tasks")}?error=${encodeURIComponent(firstFieldError(parsed.error))}`,
+    );
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  if (userError || !user) {
+    redirect(`/login?next=/tanks/${parsed.data.tankId}/tasks`);
+  }
+
+  const { error } = await supabase.rpc("reschedule_maintenance_task", {
+    p_task_id: parsed.data.taskId,
+    p_next_due_on: parsed.data.nextDueOn,
+  });
+
+  if (error) {
+    redirect(
+      `/tanks/${parsed.data.tankId}/tasks?error=${encodeURIComponent("Could not reschedule task")}`,
+    );
+  }
+
+  revalidatePath("/dashboard");
+  revalidatePath(`/tanks/${parsed.data.tankId}`);
+  revalidatePath(`/tanks/${parsed.data.tankId}/tasks`);
+  redirect(`/tanks/${parsed.data.tankId}/tasks?saved=task-rescheduled`);
 }

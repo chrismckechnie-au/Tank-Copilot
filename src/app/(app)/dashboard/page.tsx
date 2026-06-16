@@ -28,6 +28,19 @@ export default async function DashboardPage() {
       .filter((test, index, tests) => tests.findIndex((item) => item.tank_id === test.tank_id) === index)
       .map((test) => [test.tank_id, test]),
   );
+  const today = new Date().toISOString().slice(0, 10);
+  const { data: dueTasks } = tankIds.length
+    ? await supabase
+        .from("maintenance_tasks")
+        .select("tank_id,title,next_due_on")
+        .in("tank_id", tankIds)
+        .lte("next_due_on", today)
+        .order("next_due_on", { ascending: true })
+    : { data: [] };
+  const dueTaskCountByTank = new Map<string, number>();
+  for (const task of dueTasks ?? []) {
+    dueTaskCountByTank.set(task.tank_id, (dueTaskCountByTank.get(task.tank_id) ?? 0) + 1);
+  }
 
   return (
     <main className="mx-auto w-full max-w-7xl px-6 py-10">
@@ -53,16 +66,18 @@ export default async function DashboardPage() {
         <section className="grid gap-4 md:grid-cols-2">
           {tanks.map((tank) => {
             const latestTest = latestWaterTestByTank.get(tank.id);
+            const dueTaskCount = dueTaskCountByTank.get(tank.id) ?? 0;
 
             return (
-              <Link
+              <article
                 className="rounded-[1.5rem] border border-border bg-card/80 p-5 shadow-sm transition hover:translate-y-[-1px]"
-                href={`/tanks/${tank.id}`}
                 key={tank.id}
               >
                 <div className="flex items-start justify-between gap-4">
                   <div>
-                    <h2 className="text-2xl font-semibold tracking-tight">{tank.name}</h2>
+                    <Link className="text-2xl font-semibold tracking-tight" href={`/tanks/${tank.id}`}>
+                      {tank.name}
+                    </Link>
                     <p className="mt-2 text-sm text-muted-foreground">
                       {tank.type.toUpperCase()} · {tank.volume_liters} L · {tank.water_source}
                     </p>
@@ -97,7 +112,17 @@ export default async function DashboardPage() {
                     safety result path.
                   </p>
                 )}
-              </Link>
+
+                {dueTaskCount > 0 ? (
+                  <Link
+                    className="mt-3 block rounded-2xl border border-primary/20 bg-primary/10 p-3 text-sm text-primary"
+                    href={`/tanks/${tank.id}/tasks`}
+                  >
+                    {dueTaskCount} maintenance task{dueTaskCount === 1 ? "" : "s"} due.
+                    Open tasks to complete or reschedule.
+                  </Link>
+                ) : null}
+              </article>
             );
           })}
         </section>
