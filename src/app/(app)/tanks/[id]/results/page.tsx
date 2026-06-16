@@ -88,8 +88,8 @@ export default async function ResultsPage({ params, searchParams }: ResultsPageP
           Info-only internal QA result. Do not use this as tank-care advice yet.
         </h1>
         <p className="mt-2 text-sm leading-6">
-          Action checklists, urgent recommendations, reports, and share links stay disabled
-          until Rules v0 has two domain reviewer sign-offs.
+          Action checklists and urgent recommendations stay disabled until Rules v0 has
+          two domain reviewer sign-offs. Phase 3 reports are info-only context summaries.
         </p>
       </section>
 
@@ -180,13 +180,12 @@ export default async function ResultsPage({ params, searchParams }: ResultsPageP
           >
             Log another test
           </Link>
-          <button
-            className="rounded-full border border-border px-5 py-3 text-muted-foreground"
-            disabled
-            type="button"
+          <Link
+            className="rounded-full border border-border px-5 py-3 text-center font-medium"
+            href={`/tanks/${tank.id}/reports`}
           >
-            Generate report disabled pending sign-off
-          </button>
+            Generate info-only report
+          </Link>
         </div>
       </section>
     </main>

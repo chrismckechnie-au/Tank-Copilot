@@ -198,6 +198,42 @@ export type Database = {
         Update: Partial<Database["public"]["Tables"]["observations"]["Insert"]>;
         Relationships: [];
       };
+      reports: {
+        Row: {
+          id: string;
+          tank_id: string;
+          owner_user_id: string;
+          business_id: string | null;
+          type: "community" | "lfs" | "service";
+          generated_at: string;
+          content: Json;
+          sanitized_public_content: Json;
+          share_id: string;
+          share_enabled: boolean;
+          share_expires_at: string | null;
+          pdf_path: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          tank_id: string;
+          owner_user_id: string;
+          business_id?: string | null;
+          type?: "community" | "lfs" | "service";
+          generated_at?: string;
+          content: Json;
+          sanitized_public_content: Json;
+          share_id?: string;
+          share_enabled?: boolean;
+          share_expires_at?: string | null;
+          pdf_path?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["reports"]["Insert"]>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -224,6 +260,12 @@ export type Database = {
           p_photo_paths?: string[];
         };
         Returns: string;
+      };
+      get_public_report: {
+        Args: {
+          p_share_id: string;
+        };
+        Returns: Json;
       };
     };
     Enums: Record<string, never>;
