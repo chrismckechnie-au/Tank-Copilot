@@ -130,6 +130,48 @@ export type Database = {
         Update: Partial<Database["public"]["Tables"]["water_tests"]["Insert"]>;
         Relationships: [];
       };
+      recommendations: {
+        Row: {
+          id: string;
+          tank_id: string;
+          water_test_id: string;
+          source_event_id: string;
+          source_type: "water_test";
+          severity: "green" | "yellow" | "red";
+          flags: string[];
+          rule_ids: string[];
+          rule_version: string;
+          explanation: string;
+          explanations: Json;
+          checklist: Json;
+          confidence: "low" | "medium" | "high";
+          review_status: "unsigned" | "signed";
+          display_mode: "info_only" | "actionable";
+          missing_fields: string[];
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          tank_id: string;
+          water_test_id: string;
+          source_event_id: string;
+          source_type?: "water_test";
+          severity: "green" | "yellow" | "red";
+          flags?: string[];
+          rule_ids?: string[];
+          rule_version: string;
+          explanation: string;
+          explanations?: Json;
+          checklist?: Json;
+          confidence: "low" | "medium" | "high";
+          review_status?: "unsigned" | "signed";
+          display_mode?: "info_only" | "actionable";
+          missing_fields?: string[];
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["recommendations"]["Insert"]>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {

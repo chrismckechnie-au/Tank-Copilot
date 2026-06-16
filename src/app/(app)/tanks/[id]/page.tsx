@@ -43,9 +43,14 @@ export default async function TankPage({ params }: TankPageProps) {
             <h1 className="font-heading text-4xl font-semibold tracking-[-0.04em]">{tank.name}</h1>
             <p className="mt-2 text-muted-foreground">Water source: {tank.water_source}</p>
           </div>
-          <Link className="rounded-full bg-primary px-5 py-3 text-center font-medium text-primary-foreground" href={`/tanks/${tank.id}/test`}>
-            Log water test
-          </Link>
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <Link className="rounded-full bg-primary px-5 py-3 text-center font-medium text-primary-foreground" href={`/tanks/${tank.id}/test`}>
+              Log water test
+            </Link>
+            <Link className="rounded-full border border-border px-5 py-3 text-center font-medium" href={`/tanks/${tank.id}/results`}>
+              View latest result
+            </Link>
+          </div>
         </div>
       </section>
 

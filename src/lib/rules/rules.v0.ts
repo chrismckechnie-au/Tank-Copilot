@@ -2,6 +2,8 @@ import type { RuleDefinition, RuleEngineInput, RuleSource } from "./types";
 
 const appliesToAllTanks = ["fw", "planted", "reef"] as const;
 
+export const rulesV0Version = "rules.v0.unsigned.2026-06-16";
+
 const sources = {
   merckRanges: {
     id: "SRC-001",

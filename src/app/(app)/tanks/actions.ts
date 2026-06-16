@@ -15,6 +15,10 @@ import {
   waterTestPhotoConfig,
   type TankType,
 } from "@/lib/tanks/validation";
+import {
+  buildRecommendationDraft,
+  recommendationPersistedChecklist,
+} from "@/lib/rules/recommendations";
 import { createClient } from "@/lib/supabase/server";
 
 function firstFieldError(error: unknown) {
@@ -89,7 +93,7 @@ export async function logWaterTest(formData: FormData) {
 
   const { data: tank, error: tankError } = await supabase
     .from("tanks")
-    .select("id,type")
+    .select("id,type,volume_liters")
     .eq("id", parsed.data.tankId)
     .single();
 
@@ -130,24 +134,28 @@ export async function logWaterTest(formData: FormData) {
   }
 
   const input = parsed.data;
-  const { error } = await supabase.from("water_tests").insert({
-    tank_id: tank.id,
-    ammonia: input.ammonia ?? null,
-    nitrite: input.nitrite ?? null,
-    nitrate: input.nitrate ?? null,
-    ph: input.ph ?? null,
-    temp_c: input.tempC ?? null,
-    salinity: input.salinityPpt ?? null,
-    kh: input.alkalinityDkh ?? null,
-    gh: input.gh ?? null,
-    phosphate: input.phosphate ?? null,
-    calcium: input.calcium ?? null,
-    magnesium: input.magnesium ?? null,
-    notes: input.notes ?? "",
-    photo_path: photoPath,
-  });
+  const { data: savedTest, error } = await supabase
+    .from("water_tests")
+    .insert({
+      tank_id: tank.id,
+      ammonia: input.ammonia ?? null,
+      nitrite: input.nitrite ?? null,
+      nitrate: input.nitrate ?? null,
+      ph: input.ph ?? null,
+      temp_c: input.tempC ?? null,
+      salinity: input.salinityPpt ?? null,
+      kh: input.alkalinityDkh ?? null,
+      gh: input.gh ?? null,
+      phosphate: input.phosphate ?? null,
+      calcium: input.calcium ?? null,
+      magnesium: input.magnesium ?? null,
+      notes: input.notes ?? "",
+      photo_path: photoPath,
+    })
+    .select("id,ammonia,nitrite,nitrate,ph,temp_c,salinity,kh,gh,phosphate,calcium,magnesium")
+    .single();
 
-  if (error) {
+  if (error || !savedTest) {
     if (photoPath) {
       await supabase.storage.from(waterTestPhotoConfig.bucket).remove([photoPath]);
     }
@@ -155,7 +163,40 @@ export async function logWaterTest(formData: FormData) {
     redirect(`/tanks/${tank.id}/test?error=${encodeURIComponent("Could not save water test")}`);
   }
 
+  const recommendation = buildRecommendationDraft({
+    tank: {
+      id: tank.id,
+      type: tank.type as TankType,
+      volume_liters: tank.volume_liters,
+    },
+    waterTest: savedTest,
+  });
+  const { error: recommendationError } = await supabase.from("recommendations").insert({
+    tank_id: recommendation.tankId,
+    water_test_id: recommendation.waterTestId,
+    source_event_id: recommendation.waterTestId,
+    source_type: "water_test",
+    severity: recommendation.severity,
+    flags: recommendation.flags,
+    rule_ids: recommendation.ruleIds,
+    rule_version: recommendation.ruleVersion,
+    explanation: recommendation.explanation,
+    explanations: recommendation.explanations,
+    checklist: recommendationPersistedChecklist(recommendation),
+    confidence: recommendation.confidence,
+    review_status: recommendation.reviewStatus,
+    display_mode: recommendation.displayMode,
+    missing_fields: recommendation.missingFields,
+  });
+
   revalidatePath("/dashboard");
   revalidatePath(`/tanks/${tank.id}`);
-  redirect(`/tanks/${tank.id}`);
+  revalidatePath(`/tanks/${tank.id}/results`);
+
+  const resultParams = new URLSearchParams({ test: savedTest.id });
+  if (recommendationError) {
+    resultParams.set("warning", "recommendation-not-persisted");
+  }
+
+  redirect(`/tanks/${tank.id}/results?${resultParams.toString()}`);
 }
