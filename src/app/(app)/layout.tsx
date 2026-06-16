@@ -49,6 +49,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
             <Link href="/dashboard">Dashboard</Link>
             {isCommercialModeEnabled() ? <Link href="/businesses">Business</Link> : null}
             <Link href="/tanks/new">New tank</Link>
+            <Link href="/billing">Billing</Link>
             <Link href="/settings">Settings</Link>
             <form action={signOut}>
               <button className="rounded-full border border-border px-4 py-2" type="submit">

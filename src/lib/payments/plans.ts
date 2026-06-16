@@ -17,8 +17,9 @@ export const entitlementStatuses = [
 
 export type EntitlementPlan = (typeof entitlementPlans)[number];
 export type EntitlementStatus = (typeof entitlementStatuses)[number];
+export type PaidEntitlementPlan = Exclude<EntitlementPlan, "free">;
 
-const priceEnvByPlan: Record<Exclude<EntitlementPlan, "free">, string> = {
+export const priceEnvByPlan: Record<PaidEntitlementPlan, string> = {
   hobby_pro: "STRIPE_PRICE_HOBBY_PRO",
   reef_pro: "STRIPE_PRICE_REEF_PRO",
   service_pro: "STRIPE_PRICE_SERVICE_PRO",
@@ -27,14 +28,14 @@ const priceEnvByPlan: Record<Exclude<EntitlementPlan, "free">, string> = {
 
 export function planFromStripePriceId(
   priceId: string | null | undefined,
-): Exclude<EntitlementPlan, "free"> | null {
+): PaidEntitlementPlan | null {
   if (!priceId) {
     return null;
   }
 
   for (const [plan, envName] of Object.entries(priceEnvByPlan)) {
     if (process.env[envName] === priceId) {
-      return plan as Exclude<EntitlementPlan, "free">;
+      return plan as PaidEntitlementPlan;
     }
   }
 

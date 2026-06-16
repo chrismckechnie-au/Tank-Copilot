@@ -73,6 +73,9 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
               Permanently delete account
             </button>
           </form>
+          <Link className="mt-5 inline-flex rounded-full border border-border px-5 py-3 text-sm font-medium" href="/billing">
+            Manage billing
+          </Link>
         </article>
 
         <article className="rounded-[2rem] border border-border bg-card p-6">
