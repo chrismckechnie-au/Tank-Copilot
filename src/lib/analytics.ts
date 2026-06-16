@@ -14,6 +14,7 @@ const allowedPropertyKeys = new Set([
   "feature",
   "path",
   "phase",
+  "plan",
   "source",
   "status",
 ]);
@@ -127,3 +128,12 @@ export function createPostHogConfig(apiHost?: string): Partial<PostHogConfig> {
     },
   };
 }
+
+export const funnelEvents = {
+  activation: "activation",
+  firstValue: "first_value",
+  reportUse: "report_use",
+  retention: "retention",
+  paywall: "paywall",
+  commercialIntent: "commercial_intent",
+} as const;

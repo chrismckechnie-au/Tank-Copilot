@@ -94,6 +94,62 @@ export type Database = {
         Update: Partial<Database["public"]["Tables"]["clients"]["Insert"]>;
         Relationships: [];
       };
+      entitlements: {
+        Row: {
+          id: string;
+          user_id: string | null;
+          business_id: string | null;
+          plan: "free" | "hobby_pro" | "reef_pro" | "service_pro" | "lfs";
+          status: "active" | "trialing" | "past_due" | "canceled" | "unpaid" | "incomplete";
+          stripe_customer_id: string | null;
+          stripe_subscription_id: string | null;
+          stripe_price_id: string | null;
+          current_period_end: string | null;
+          limits: Json;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id?: string | null;
+          business_id?: string | null;
+          plan?: "free" | "hobby_pro" | "reef_pro" | "service_pro" | "lfs";
+          status?: "active" | "trialing" | "past_due" | "canceled" | "unpaid" | "incomplete";
+          stripe_customer_id?: string | null;
+          stripe_subscription_id?: string | null;
+          stripe_price_id?: string | null;
+          current_period_end?: string | null;
+          limits?: Json;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["entitlements"]["Insert"]>;
+        Relationships: [];
+      };
+      webhook_events: {
+        Row: {
+          id: string;
+          stripe_event_id: string;
+          stripe_event_type: string;
+          stripe_object_id: string;
+          stripe_event_fingerprint: string;
+          processed_at: string | null;
+          processing_error: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          stripe_event_id: string;
+          stripe_event_type: string;
+          stripe_object_id: string;
+          stripe_event_fingerprint: string;
+          processed_at?: string | null;
+          processing_error?: string | null;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["webhook_events"]["Insert"]>;
+        Relationships: [];
+      };
       tanks: {
         Row: {
           id: string;
@@ -443,6 +499,22 @@ export type Database = {
           p_equipment_name: string | null;
         };
         Returns: string;
+      };
+      process_stripe_subscription_event: {
+        Args: {
+          p_stripe_event_id: string;
+          p_stripe_event_type: string;
+          p_stripe_object_id: string;
+          p_stripe_customer_id: string;
+          p_stripe_subscription_id: string;
+          p_stripe_price_id: string;
+          p_plan: "hobby_pro" | "reef_pro" | "service_pro" | "lfs";
+          p_status: "active" | "trialing" | "past_due" | "canceled" | "unpaid" | "incomplete";
+          p_user_id: string | null;
+          p_business_id: string | null;
+          p_current_period_end: string | null;
+        };
+        Returns: Json;
       };
       create_observation: {
         Args: {

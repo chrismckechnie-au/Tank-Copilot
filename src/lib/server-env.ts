@@ -1,6 +1,10 @@
 import "server-only";
 
-type ServerEnvKey = "SUPABASE_SERVICE_ROLE_KEY" | "SUPABASE_DATABASE_URL";
+type ServerEnvKey =
+  | "SUPABASE_SERVICE_ROLE_KEY"
+  | "SUPABASE_DATABASE_URL"
+  | "STRIPE_SECRET_KEY"
+  | "STRIPE_WEBHOOK_SECRET";
 
 export function getServerEnv(name: ServerEnvKey): string {
   const value = process.env[name];

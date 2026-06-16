@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   beforeSendPostHogEvent,
   createPostHogConfig,
+  funnelEvents,
   sanitizeAnalyticsProperties,
   sanitizePath,
 } from "./analytics";
@@ -24,6 +25,7 @@ describe("analytics sanitization", () => {
       sanitizeAnalyticsProperties({
         path: "/r/share-token",
         phase: "0",
+        plan: "reef_pro",
         email: "person@example.com",
         raw_id: "abc",
         nested: { unsafe: true },
@@ -31,6 +33,7 @@ describe("analytics sanitization", () => {
     ).toEqual({
       path: "/r/[shareId]",
       phase: "0",
+      plan: "reef_pro",
     });
   });
 
@@ -80,5 +83,16 @@ describe("analytics sanitization", () => {
         maskTextSelector: "*",
       },
     });
+  });
+
+  it("names the Phase 6 funnel events without user identifiers", () => {
+    expect(Object.values(funnelEvents)).toEqual([
+      "activation",
+      "first_value",
+      "report_use",
+      "retention",
+      "paywall",
+      "commercial_intent",
+    ]);
   });
 });
